@@ -37,13 +37,39 @@ const fetchEntries = (diff, snapshots) => {
   })
 }
 
-const aggregateStats = state => {
-  // -- divide the dataset into time groups.
-  for (const [name, value] of Object.entries(constants.bins)) {
-    const entries = fetchEntries(value, state.snapshots)
-    console.log(entries)
+const aggregateStats = (state, args) => {
+  state.percentiles = aggregateStats.percentiles(state, args)
+
+
+  console.log(state.percentiles)
+}
+
+aggregateStats.percentiles = (state, args) => {
+  const percentilesByHost = {}
+
+  for (const { name, host } of args.hosts) {
+    percentilesByHost[host] = {
+      percentiles: {}
+    }
+
+    for (const [name, value] of Object.entries(constants.bins)) {
+
+      const entries = fetchEntries(value, state.snapshots.filter(data => data.host === host))
+      const percentiles = percentile([1, 5, 25, 50, 75, 95, 99], entries.map(data => data.time))
+
+      percentilesByHost[host].percentiles[name] = {
+        p1: percentiles[0],
+        p5: percentiles[1],
+        p25: percentiles[2],
+        p50: percentiles[3],
+        p75: percentiles[4],
+        p95: percentiles[5],
+        p99: percentiles[6]
+      }
+    }
   }
 
+  return percentilesByHost
 }
 
 /**
@@ -51,7 +77,7 @@ const aggregateStats = state => {
  *
  * @param {Object} state applciation state
  */
-const updateHostStats = state => data => {
+const updateHostStats = (state, args) => (data) => {
   const snapshots = state.snapshots
   snapshots.push({
     host: data.host,
@@ -60,20 +86,22 @@ const updateHostStats = state => data => {
     timestamp: Date.now()
   })
 
-  aggregateStats(state)
+  aggregateStats(state, args)
 }
 
 const cuptime = async rawArgs => {
   const args = await cuptime.preprocess(rawArgs)
-  const emitter = pingNetworks(rawArgs)
+  const emitter = pingNetworks(args)
 
-  emitter.on('ping', updateHostStats(state))
+  emitter.on('ping', updateHostStats(state, args))
 }
 
 cuptime.preprocess = args => {
   if (!args.hosts) {
     args.hosts = constants.hosts
   }
+
+  return args
 }
 
 module.exports = cuptime
