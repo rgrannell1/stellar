@@ -1,0 +1,24 @@
+name: cuptime
+grade: devel
+version: v0.1.0
+base: core18
+
+summary: Measure Connection Reliability
+
+description: >
+  Measure Connection Reliability
+confinement: strict
+
+apps:
+  kale:
+    command: bin/cuptime
+    plugs:
+      - home
+
+parts:
+  kale:
+    source: .
+    plugin: nodejs
+    nodejs-version: 14.3.0
+    nodejs-package-manager: yarn
+    build-packages: ['libcurl4-openssl-dev', 'git']

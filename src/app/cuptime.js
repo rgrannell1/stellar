@@ -1,4 +1,5 @@
 
+const chalk = require('chalk')
 const ping = require('ping').promise
 const wifiName = require('wifi-name')
 const EventEmitter = require('events')
@@ -39,9 +40,6 @@ const fetchEntries = (diff, snapshots) => {
 
 const aggregateStats = (state, args) => {
   state.percentiles = aggregateStats.percentiles(state, args)
-
-
-  console.log(state.percentiles)
 }
 
 aggregateStats.percentiles = (state, args) => {
@@ -87,6 +85,7 @@ const updateHostStats = (state, args) => (data) => {
   })
 
   aggregateStats(state, args)
+  displayCli(state)
 }
 
 const cuptime = async rawArgs => {
@@ -94,6 +93,27 @@ const cuptime = async rawArgs => {
   const emitter = pingNetworks(args)
 
   emitter.on('ping', updateHostStats(state, args))
+}
+
+const displayCli = state => {
+  let message = ''
+  for (const [name, { percentiles }] of Object.entries(state.percentiles)) {
+    message += `${name}:\n`
+    message += 'range p1    p5    p25   p50   p75   p95   p99\n'
+    for (const [time, values] of Object.entries(percentiles)) {
+      message += chalk.red(time).padEnd(6)
+
+      for (const value of Object.values(values)) {
+        message += `${value}`.padEnd(6)
+      }
+
+      message += '\n'
+    }
+    message += '\n'
+  }
+
+  console.log(message)
+  throw 'xx'
 }
 
 cuptime.preprocess = args => {
