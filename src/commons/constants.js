@@ -1,4 +1,6 @@
 
+const asciichart = require('asciichart')
+
 const constants = {
   bins: {
     '1m': 60 * 1000,
@@ -10,15 +12,17 @@ const constants = {
   hosts: [
     {
       name: 'google-dns',
-      host: '8.8.8.8'
+      host: '8.8.8.8',
+      colour: asciichart.lightcyan
     },
     {
-      name: 'google-dns',
-      host: '8.8.4.4'
+      name: 'cloudfront-dns',
+      host: '1.1.1.1',
+      colour: asciichart.lightblue
     }
   ],
   intervals: {
-    poll: 2000
+    poll: 4000
   }
 }
 

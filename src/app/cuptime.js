@@ -1,12 +1,10 @@
 
 const chalk = require('chalk')
+const asciichart = require('asciichart')
 const ping = require('ping').promise
 const wifiName = require('wifi-name')
 const EventEmitter = require('events')
-const percentile = require("percentile")
 const stats = require('stats-lite')
-
-const { Table } = require('console-table-printer')
 
 const constants = require('../commons/constants')
 
@@ -57,6 +55,37 @@ const fetchEntries = (diff, snapshots) => {
 
 const aggregateStats = (state, args) => {
   state.percentiles = aggregateStats.percentiles(state, args)
+  state.packetLoss = aggregateStats.packetLoss(state, args)
+}
+
+const sum = (a, b) => a + b
+
+aggregateStats.packetLoss = (state, args) => {
+  const bins = {}
+  for (const { host } of constants.hosts) {
+    bins[host] = [{
+      host,
+      elems: [],
+      packetLoss: 1
+    }]
+
+    const hostSnapshots = state.snapshots.filter(data => data.host === host)
+    const binSize = Math.ceil(hostSnapshots.length / 30)
+
+    for (let ith = 0; ith < hostSnapshots.length; ith += binSize) {
+      let elems = hostSnapshots.slice(ith, ith + binSize)
+
+      let isAlive = elems.map(elem => elem.alive ? 0 : 1)
+
+      bins[host].push({
+        host,
+        elems,
+        packetLoss: isAlive.reduce(sum, 0) / elems.length
+      })
+    }
+  }
+
+  return bins
 }
 
 aggregateStats.percentiles = (state, args) => {
@@ -129,7 +158,7 @@ const addEntry = num => {
   } else if (num < 100) {
     str = chalk.yellow(num.toString())
   } else if (Number.isNaN(num)) {
-    str = chalk.black('-')
+    str = chalk.red('!')
   } else {
     str = chalk.red(num.toString())
   }
@@ -140,7 +169,9 @@ const addEntry = num => {
 
 const addJitter = num => {
   let str
-  if (num < 30) {
+  if (Number.isNaN(num)) {
+    str = chalk.red('!')
+  } else if (num < 30) {
     str = chalk.green(num)
   } else if (num < 40) {
     str = chalk.yellow(num)
@@ -155,7 +186,6 @@ const printPercentileTable = (host, hostData) => {
   const { percentiles } = hostData
 
   const hostDescription = constants.hosts.find(data => data.host === host).name
-
   console.log(`${hostDescription}: ${host}`)
 
   let message = ''
@@ -191,26 +221,34 @@ const printPercentileTable = (host, hostData) => {
 const displayCli = state => {
   let message = ''
 
-  const flo = {
-    '1m': {
-      p1: 1,
-      p50: 1,
-      p99: 1
-    },
-    '5m': {
-      p1: 1,
-        p50: 1,
-        p99: 1
-    }
+  console.clear()
+
+  console.log('-------- ICMP ------------------------------------------------------------')
+  console.log('')
+
+  console.log('Total Packet Loss')
+
+  const series = []
+  for (const host of Object.keys(state.percentiles)) {
+    const data = state.packetLoss[host].map(data => data.packetLoss)
+
+    series.push(data)
   }
 
-  console.clear()
+  const text = asciichart.plot(series, {
+    height: 7,
+    offset: 2,
+    colors: constants.hosts.map(data => data.colour),
+    format: label => {
+      return `${(label).toFixed(2)}%`
+    }
+  })
+  console.log(text)
+  console.log('')
 
   for (const host of Object.keys(state.percentiles)) {
     printPercentileTable(host, state.percentiles[host])
   }
-
-  return
 }
 
 cuptime.preprocess = args => {
