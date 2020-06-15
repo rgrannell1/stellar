@@ -1,9 +1,7 @@
 
 const chalk = require('chalk')
-const asciichart = require('asciichart')
 const ping = require('ping').promise
 const EventEmitter = require('events')
-const stats = require('stats-lite')
 
 const constants = require('../commons/constants')
 const network = require('../commons/network')
@@ -45,15 +43,10 @@ const state = {
   snapshots: []
 }
 
-const fetchEntries = (diff, snapshots) => {
-  return snapshots.filter(snapshot => {
-    return snapshot.timestamp > (Date.now() - diff)
-  })
-}
-
 const aggregateStats = (state, args) => {
   state.percentiles = monitors.latency.aggregate(state, args)
   state.packetLoss = monitors.packetLoss.aggregate(state, args)
+  state.networkIncidents = monitors.networkIncidents.aggregate(state, args)
 }
 
 /**
@@ -63,13 +56,24 @@ const aggregateStats = (state, args) => {
  */
 const updateHostStats = (state, args) => (data) => {
   const snapshots = state.snapshots
-  snapshots.push({
+
+  const snapshot = {
     host: data.host,
     network: data.networkName,
     time: data.time,
     timestamp: Date.now(),
     alive: data.alive
-  })
+  }
+
+  if (!data.alive) {
+    snapshot.state = 'DEAD'
+  } else if (data.time > constants.thresholds.show) {
+    snapshot.state = 'SLOW'
+  } else {
+    snapshot.state = 'OK'
+  }
+
+  snapshots.push(snapshot)
 
   aggregateStats(state, args)
   displayCli(state)

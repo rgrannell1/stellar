@@ -51,7 +51,7 @@ packetLoss.display = state => {
     offset: 2,
     colors: constants.hosts.map(data => data.colour.asciichart),
     format: label => {
-      return `${(label).toFixed(2)}%`
+      return `${(label * 100).toFixed(0)}%`
     }
   })
   text = text.split('\n')

@@ -2,9 +2,9 @@
 const asciichart = require('asciichart')
 
 const constants = {
+  packageJson: require('../../package'),
   bins: {
     '1m': 60 * 1000,
-    '5m': 5 * 60 * 1000,
     '15m': 15 * 60 * 1000,
     '1h': 60 * 60 * 1000,
     '24h': 24 * 60 * 60 * 1000
@@ -29,6 +29,9 @@ const constants = {
   ],
   intervals: {
     poll: 4000
+  },
+  thresholds: {
+    slow: 500
   }
 }
 

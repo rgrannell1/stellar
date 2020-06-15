@@ -10,13 +10,13 @@ description: >
 confinement: strict
 
 apps:
-  kale:
+  cuptime:
     command: bin/cuptime
     plugs:
       - home
 
 parts:
-  kale:
+  cuptime:
     source: .
     plugin: nodejs
     nodejs-version: 14.3.0

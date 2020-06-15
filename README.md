@@ -11,6 +11,12 @@ On Linux distributions that support Snap packages, run:
 sudo snap install cuptime
 ```
 
+### Changelog
+
+#### v0.1.0
+
+- Initial release. Includes basic latency and packet loss monitoring for two fixed hosts.
+
 ### License
 
 The MIT License
