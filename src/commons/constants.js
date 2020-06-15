@@ -16,7 +16,10 @@ const constants = {
       name: 'google-dns',
       host: '8.8.4.4'
     }
-  ]
+  ],
+  intervals: {
+    poll: 2000
+  }
 }
 
 module.exports = constants

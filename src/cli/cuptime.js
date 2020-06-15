@@ -3,6 +3,7 @@
 const neodoc = require('neodoc')
 
 const handleErrors = require('../commons/handle-errors')
+const constants = require('../commons/constants')
 
 const docs = `
 Name:
@@ -12,7 +13,7 @@ Usage:
   cuptime (-h | --help | --version)
 
 Options:
-  -i <int>, --interval <int>    the interval [default: 1000]
+  -i <int>, --interval <int>    the interval [default: ${constants.intervals.poll}]
 
 Description:
   cuptime
