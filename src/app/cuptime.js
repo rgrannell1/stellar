@@ -2,23 +2,16 @@
 const chalk = require('chalk')
 const asciichart = require('asciichart')
 const ping = require('ping').promise
-const wifiName = require('wifi-name')
 const EventEmitter = require('events')
 const stats = require('stats-lite')
 
 const constants = require('../commons/constants')
+const network = require('../commons/network')
 
 const monitors = {
   packetLoss: require('../monitor/packet-loss'),
+  networkIncidents: require('../monitor/network-incidents'),
   latency: require('../monitor/latency')
-}
-
-let previousNetwork
-const getNetworkName = async () => {
-  try {
-    previousNetwork = await wifiName()
-    return
-  } catch (err) { }
 }
 
 const pingNetworks = args => {
@@ -34,7 +27,7 @@ const pingNetworks = args => {
         // -- todo.
       }
 
-      const networkName = await getNetworkName()
+      const networkName = await network.getName()
 
 
       emitter.emit('ping', {
@@ -59,42 +52,8 @@ const fetchEntries = (diff, snapshots) => {
 }
 
 const aggregateStats = (state, args) => {
-  state.percentiles = aggregateStats.percentiles(state, args)
+  state.percentiles = monitors.latency.aggregate(state, args)
   state.packetLoss = monitors.packetLoss.aggregate(state, args)
-}
-
-
-aggregateStats.percentiles = (state, args) => {
-  const percentilesByHost = {}
-
-  for (const { name, host } of args.hosts) {
-    percentilesByHost[host] = {
-      percentiles: {}
-    }
-
-    for (const [name, value] of Object.entries(constants.bins)) {
-      const hostEntries = state.snapshots.filter(data => {
-        return data.host === host
-      })
-
-      const entries = fetchEntries(value, hostEntries)
-
-      const times = entries.map(data => data.time)
-
-      percentilesByHost[host].percentiles[name] = {
-        p1: Math.round(stats.percentile(times, 0.01)),
-        p5: Math.round(stats.percentile(times, 0.05)),
-        p25: Math.round(stats.percentile(times, 0.25)),
-        p50: Math.round(stats.percentile(times, 0.50)),
-        p75: Math.round(stats.percentile(times, 0.75)),
-        p95: Math.round(stats.percentile(times, 0.95)),
-        p99: Math.round(stats.percentile(times, 0.99)),
-        jitter: Math.round(stats.stdev(times))
-      }
-    }
-  }
-
-  return percentilesByHost
 }
 
 /**
@@ -130,47 +89,11 @@ const cuptime = async rawArgs => {
   emitter.on('ping', updateHostStats(state, args))
 }
 
-const addEntry = num => {
-  let str
-  if (num < 60) {
-    str = chalk.green(num.toString())
-  } else if (num < 100) {
-    str = chalk.yellow(num.toString())
-  } else if (Number.isNaN(num)) {
-    str = chalk.red('!')
-  } else {
-    str = chalk.red(num.toString())
-  }
-
-  // -- why does 18 work? ANSI sequences.
-  return str.padEnd(18)
-}
-
-const addJitter = num => {
-  let str
-  if (Number.isNaN(num)) {
-    str = chalk.red('±' + '!')
-  } else if (num < 30) {
-    str = chalk.green('±' + num)
-  } else if (num < 40) {
-    str = chalk.yellow('±' + num)
-  } else {
-    str = chalk.red('±' + num)
-  }
-
-  // -- padding needed to compensate for ANSI
-  return str.padEnd(17)
-}
-
 /**
- * Detect deviations from normal network behavior
+ * Display an interactive CLI containing network information.
  *
- * @param {Object} state
+ * @param {Object} state the application state.
  */
-const printNetworkIncidents = state => {
-
-}
-
 const displayCli = state => {
   let message = ''
 
@@ -183,7 +106,7 @@ const displayCli = state => {
   monitors.packetLoss.display(state)
 
   console.log(chalk.bold('Degraded Service'))
-  printNetworkIncidents(state)
+  monitors.networkIncidents.display(state)
   console.log(chalk.bold('Latency & Jitter'))
 
   for (const host of Object.keys(state.percentiles)) {

@@ -1,6 +1,7 @@
 
 const chalk = require('chalk')
 const constants = require('../commons/constants')
+const stats = require('stats-lite')
 
 const latency = {}
 
@@ -74,6 +75,46 @@ latency.display = (host, hostData) => {
   }
 
   console.log(message)
+}
+
+
+const fetchEntries = (diff, snapshots) => {
+  return snapshots.filter(snapshot => {
+    return snapshot.timestamp > (Date.now() - diff)
+  })
+}
+
+latency.aggregate = (state, args) => {
+  const percentilesByHost = {}
+
+  for (const { name, host } of args.hosts) {
+    percentilesByHost[host] = {
+      percentiles: {}
+    }
+
+    for (const [name, value] of Object.entries(constants.bins)) {
+      const hostEntries = state.snapshots.filter(data => {
+        return data.host === host
+      })
+
+      const entries = fetchEntries(value, hostEntries)
+
+      const times = entries.map(data => data.time)
+
+      percentilesByHost[host].percentiles[name] = {
+        p1: Math.round(stats.percentile(times, 0.01)),
+        p5: Math.round(stats.percentile(times, 0.05)),
+        p25: Math.round(stats.percentile(times, 0.25)),
+        p50: Math.round(stats.percentile(times, 0.50)),
+        p75: Math.round(stats.percentile(times, 0.75)),
+        p95: Math.round(stats.percentile(times, 0.95)),
+        p99: Math.round(stats.percentile(times, 0.99)),
+        jitter: Math.round(stats.stdev(times))
+      }
+    }
+  }
+
+  return percentilesByHost
 }
 
 module.exports = latency
