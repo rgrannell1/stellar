@@ -8,6 +8,11 @@ const stats = require('stats-lite')
 
 const constants = require('../commons/constants')
 
+const monitors = {
+  packetLoss: require('../monitor/packet-loss'),
+  latency: require('../monitor/latency')
+}
+
 let previousNetwork
 const getNetworkName = async () => {
   try {
@@ -55,38 +60,9 @@ const fetchEntries = (diff, snapshots) => {
 
 const aggregateStats = (state, args) => {
   state.percentiles = aggregateStats.percentiles(state, args)
-  state.packetLoss = aggregateStats.packetLoss(state, args)
+  state.packetLoss = monitors.packetLoss.aggregate(state, args)
 }
 
-const sum = (a, b) => a + b
-
-aggregateStats.packetLoss = (state, args) => {
-  const bins = {}
-  for (const { host } of constants.hosts) {
-    bins[host] = [{
-      host,
-      elems: [],
-      packetLoss: 1
-    }]
-
-    const hostSnapshots = state.snapshots.filter(data => data.host === host)
-    const binSize = Math.ceil(hostSnapshots.length / 30)
-
-    for (let ith = 0; ith < hostSnapshots.length; ith += binSize) {
-      let elems = hostSnapshots.slice(ith, ith + binSize)
-
-      let isAlive = elems.map(elem => elem.alive ? 0 : 1)
-
-      bins[host].push({
-        host,
-        elems,
-        packetLoss: isAlive.reduce(sum, 0) / elems.length
-      })
-    }
-  }
-
-  return bins
-}
 
 aggregateStats.percentiles = (state, args) => {
   const percentilesByHost = {}
@@ -140,15 +116,18 @@ const updateHostStats = (state, args) => (data) => {
   displayCli(state)
 }
 
+/**
+ * The cuptime app's main function.
+ *
+ * @param {Object} rawArgs unprocessed arguments.
+ *
+ * @returns {Promise<>}
+ */
 const cuptime = async rawArgs => {
   const args = await cuptime.preprocess(rawArgs)
   const emitter = pingNetworks(args)
 
   emitter.on('ping', updateHostStats(state, args))
-}
-
-const pad = str => {
-  return str.padEnd(8)
 }
 
 const addEntry = num => {
@@ -170,52 +149,26 @@ const addEntry = num => {
 const addJitter = num => {
   let str
   if (Number.isNaN(num)) {
-    str = chalk.red('!')
+    str = chalk.red('±' + '!')
   } else if (num < 30) {
-    str = chalk.green(num)
+    str = chalk.green('±' + num)
   } else if (num < 40) {
-    str = chalk.yellow(num)
+    str = chalk.yellow('±' + num)
   } else {
-    str = chalk.red(num)
+    str = chalk.red('±' + num)
   }
 
-  return ('±' + str).padEnd(18)
+  // -- padding needed to compensate for ANSI
+  return str.padEnd(17)
 }
 
-const printPercentileTable = (host, hostData) => {
-  const { percentiles } = hostData
+/**
+ * Detect deviations from normal network behavior
+ *
+ * @param {Object} state
+ */
+const printNetworkIncidents = state => {
 
-  const hostDescription = constants.hosts.find(data => data.host === host).name
-  console.log(`${hostDescription}: ${host}`)
-
-  let message = ''
-  // -- add table headings
-  {
-    let line = ''
-    for (const header of ['period', 'p1', 'p5', 'p25', 'p50', 'p75', 'p95', 'p99', 'jitter']) {
-      line += `${pad(header)}`
-    }
-
-    message += `${line}\n`
-  }
-
-  // -- add line entries
-  for (const [timePeriod, entries] of Object.entries(percentiles)) {
-    let line = pad(timePeriod)
-
-    line += addEntry(entries.p1)
-    line += addEntry(entries.p5)
-    line += addEntry(entries.p25)
-    line += addEntry(entries.p50)
-    line += addEntry(entries.p75)
-    line += addEntry(entries.p95)
-    line += addEntry(entries.p99)
-    line += addJitter(entries.jitter)
-
-    message += line + '\n'
-  }
-
-  console.log(message)
 }
 
 const displayCli = state => {
@@ -223,31 +176,18 @@ const displayCli = state => {
 
   console.clear()
 
-  console.log('-------- ICMP ------------------------------------------------------------')
+  console.log('-------- cuptime -----------------------------------------------------------')
   console.log('')
 
-  console.log('Total Packet Loss')
+  console.log(chalk.bold('Total Packet Loss'))
+  monitors.packetLoss.display(state)
 
-  const series = []
-  for (const host of Object.keys(state.percentiles)) {
-    const data = state.packetLoss[host].map(data => data.packetLoss)
-
-    series.push(data)
-  }
-
-  const text = asciichart.plot(series, {
-    height: 7,
-    offset: 2,
-    colors: constants.hosts.map(data => data.colour),
-    format: label => {
-      return `${(label).toFixed(2)}%`
-    }
-  })
-  console.log(text)
-  console.log('')
+  console.log(chalk.bold('Degraded Service'))
+  printNetworkIncidents(state)
+  console.log(chalk.bold('Latency & Jitter'))
 
   for (const host of Object.keys(state.percentiles)) {
-    printPercentileTable(host, state.percentiles[host])
+    monitors.latency.display(host, state.percentiles[host])
   }
 }
 

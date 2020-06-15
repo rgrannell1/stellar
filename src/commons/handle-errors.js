@@ -1,5 +1,8 @@
 
 const userFailingErrorMesasage = `Something has went terribly wrong!
+
+Feedback URL: https://forms.gle/DDPt3GYUNMuNTLkm8
+
 Please report the following error message to https://github.com/rgrannell1/cuptime/issues,
 (along with the input text if possible):
 `

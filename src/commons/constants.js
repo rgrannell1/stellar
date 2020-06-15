@@ -13,12 +13,18 @@ const constants = {
     {
       name: 'google-dns',
       host: '8.8.8.8',
-      colour: asciichart.lightcyan
+      colour: {
+        chalk: 'blueBright',
+        asciichart: asciichart.blueBright
+      }
     },
     {
       name: 'cloudfront-dns',
       host: '1.1.1.1',
-      colour: asciichart.lightblue
+      colour: {
+        chalk: 'yellow',
+        asciichart: asciichart.yellow
+      }
     }
   ],
   intervals: {

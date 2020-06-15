@@ -23,4 +23,6 @@ const callApp = require('../cli/call-app')
 
 const args = neodoc.run(docs)
 
+process.on('unhandledRejection', handleErrors)
+
 callApp(args).catch(handleErrors)
