@@ -16,6 +16,7 @@
   "dependencies": {
     "asciichart": "^1.5.21",
     "chalk": "^4.1.0",
+    "dayjs": "^1.8.28",
     "neodoc": "^2.0.2",
     "ping": "^0.2.3",
     "simple-statistics": "^7.1.0",

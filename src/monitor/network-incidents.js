@@ -1,4 +1,7 @@
 
+const chalk = require('chalk')
+const dayjs = require('dayjs')
+
 const constants = require('../commons/constants')
 
 const networkIncidents = { }
@@ -12,58 +15,63 @@ const serviceLevel = {}
 
 const statePercents = stretch => {
   return {
-    ok: stretch.filter(data => data.state === 'OK').length / stretch.length,
-    dead: stretch.filter(data => data.state === 'DEAD').length / stretch.length,
-    slow: stretch.filter(data => data.state === 'SLOW').length / stretch.length
+    ok: (stretch.filter(data => data.state === 'OK').length / stretch.length) * 100,
+    dead: (stretch.filter(data => data.state === 'DEAD').length / stretch.length) * 100,
+    slow: (stretch.filter(data => data.state === 'SLOW').length / stretch.length) * 100
   }
 }
 
-serviceLevel.normal = stretch => {
+const presentState = stretch => {
   const pct = statePercents(stretch)
 
-  if (pct.dead < 0.98) {
-    return false
-  }
-  if (pct.slow < 0.95) {
-    return false
-  }
+  let bounds = null
 
-  return true
-}
-
-serviceLevel.mildImpact = stretch => {
-  const pct = statePercents(stretch)
-
-  if (pct.dead < 0.95) {
-    return false
-  }
-  if (pct.slow < 0.90) {
-    return false
+  if (stretch.length > 0) {
+    bounds = {
+      start: stretch[0].timestamp,
+      end: stretch[stretch.length - 1].timestamp
+    }
   }
 
-  return true
-}
-
-serviceLevel.severeImpact = stretch => {
-  const pct = statePercents(stretch)
-
-  if (pct.dead < 0.70) {
-    return false
+  if (pct.ok > 95) {
+    return {
+      status: 'NORMAL',
+      bounds
+    }
   }
-  if (pct.slow < 0.60) {
-    return false
+  if (pct.ok > 92) {
+    return {
+      status: 'MILD_IMPACT',
+      bounds
+    }
+  }
+  if (pct.ok > 80) {
+    return {
+      status: 'SEVERE_IMPACT',
+      bounds
+    }
   }
 
-  return true
-}
-
-serviceLevel.unuseable = stretch => {
-  const pct = statePercents(stretch)
-  return true
+  return {
+    status: 'UNUSEABLE',
+    bounds
+  }
 }
 
 networkIncidents.aggregate = async (state, args) => {
+}
 
+const formatDate = date => {
+  const dateObj = new Date(date)
+
+  const today = dayjs(new Date()).format('YYYY-MM-DD')
+  const day = dayjs(dateObj).format('YYYY-MM-DD')
+
+  if (day === today) {
+    return dayjs(dateObj).format('HH:mm')
+  } else {
+    return dayjs(dateObj).format('MM-DD HH:mm')
+  }
 }
 
 /**
@@ -72,10 +80,59 @@ networkIncidents.aggregate = async (state, args) => {
  * @param {Object} state
  */
 networkIncidents.display = async (state, args) => {
-  // -- todo
-  serviceLevel.normal(state.snapshots)
-  serviceLevel.mildImpact(state.snapshots)
-  serviceLevel.severeImpact(state.snapshots)
+  const momentaryStatuses = []
+
+  // -- change to variable
+  let offset = 6
+
+  for (let ith = 0; ith < state.snapshots.length; ++ith) {
+    let stretch = state.snapshots.slice(Math.max(0, ith - 6), ith)
+    momentaryStatuses.push(presentState(stretch))
+  }
+
+  const grouped = momentaryStatuses.reduce(function (prev, curr) {
+    if (prev.length && curr.status === prev[prev.length - 1][0].status) {
+      prev[prev.length - 1].push(curr)
+    }
+    else {
+      prev.push([curr])
+    }
+    return prev
+  }, [])
+
+  const incidents = grouped
+    .map(group => {
+      return {
+        status: group[0].status,
+        bounds: {
+          from: group[0]?.bounds?.start,
+          to: group[group.length - 1]?.bounds?.end
+        }
+      }
+    })
+    .filter(candidate => {
+      return candidate.status !== 'NORMAL' && candidate.bounds.from && candidate.bounds.to
+    })
+
+  const descriptions = incidents.map(data => {
+    const { bounds, status} = data
+
+    const dateDescription = `${formatDate(bounds.from)} ⟶  ${formatDate(bounds.to)}`
+    const message = `${status.padEnd(20)} ${dateDescription}`
+
+    if (status === 'SEVERE_IMPACT') {
+      console.log(chalk.yellow(message))
+    } else if (state === 'MILD_IMPACT') {
+      console.log(chalk.yellow(message))
+    } else if (state === 'UNUSEABLE') {
+      console.log(chalk.red(message))
+    } else {
+      console.log(chalk.red(message))
+    }
+  })
+
+  console.log('')
+  console.log('')
 }
 
 module.exports = networkIncidents
