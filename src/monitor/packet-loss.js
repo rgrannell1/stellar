@@ -35,7 +35,12 @@ packetLoss.aggregate = (state, args) => {
     }
   }
 
-  return bins
+  const aliveCount = state.snapshots.filter(data => data.alive).length
+
+  return {
+    packetLossPercent: text.percent(1 - (aliveCount / state.snapshots.length)),
+    packetLoss: bins
+  }
 }
 
 packetLoss.display = state => {

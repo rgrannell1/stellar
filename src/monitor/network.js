@@ -1,4 +1,5 @@
 
+const chalk = require('chalk')
 const asciichart = require('asciichart')
 
 const text = require('../commons/text')
@@ -72,13 +73,15 @@ network.display = async (state, args) => {
   const labels = [...networkNames]
     .filter(data => !!data)
     .map((label, ith) => {
-      return label + ' ■'
+      // -- TODO why does +1 select the correct colour?
+      const colour = constants.networkColours[ith + 1].chalk
+      return label + chalk[colour](' ■')
     }).join('\n')
 
   const graph = asciichart.plot(series, {
     height: 1,
     offset: 2,
-    colors: constants.networkColours,
+    colors: constants.networkColours.map(data => data.asciichart),
     format: label => {
       if (label === 1) {
         return ' on'
@@ -89,7 +92,7 @@ network.display = async (state, args) => {
   })
 
   const output = text.joinColumns(labels, graph, {
-    leftPad: [19, 19]
+    leftPad: [28, 18]
   })
 
   console.log(output)

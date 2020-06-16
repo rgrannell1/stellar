@@ -4,20 +4,22 @@ const asciichart = require('asciichart')
 const constants = {
   packageJson: require('../../package'),
   networkColours: [
-    asciichart.lightgreen,
-    asciichart.lightyellow,
-    asciichart.lightblue,
-    asciichart.lightmagenta,
-    asciichart.lightcyan,
-    asciichart.darkgray,
-    asciichart.lightred,
-    asciichart.red,
-    asciichart.green,
-    asciichart.yellow,
-    asciichart.blue,
-    asciichart.magenta,
-    asciichart.cyan,
-    asciichart.white
+    {
+      chalk: 'red',
+      asciichart: asciichart.red
+    },
+    {
+      chalk: 'green',
+      asciichart: asciichart.green
+    },
+    {
+      chalk: 'yellow',
+      asciichart: asciichart.yellow
+    },
+    {
+      chalk: 'blue',
+      asciichart: asciichart.blue
+    }
   ],
   bins: {
     '1m': 60 * 1000,
@@ -47,7 +49,7 @@ const constants = {
     poll: 4000
   },
   thresholds: {
-    slow: 500
+    slow: 700
   }
 }
 

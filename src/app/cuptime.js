@@ -45,7 +45,13 @@ const state = {
 
 const aggregateStats = (state, args) => {
   state.percentiles = monitors.latency.aggregate(state, args)
-  state.packetLoss = monitors.packetLoss.aggregate(state, args)
+
+  const { packetLossPercent, packetLoss } = monitors.packetLoss.aggregate(state, args)
+
+  state.packetLossPercent = packetLossPercent
+  state.packetLoss = packetLoss
+
+
   state.networkIncidents = monitors.networkIncidents.aggregate(state, args)
   state.networks = monitors.network.aggregate(state, args)
 }
@@ -104,7 +110,7 @@ const displayCli = state => {
 
   console.clear()
   monitors.networkIncidents.display(state)
-  console.log('-------- cuptime -----------------------------------------------------------')
+  console.log(chalk.bold('cuptime') + ` --- ${state.packetLossPercent} failed`)
   console.log('')
 
   console.log(chalk.bold('Total Packet Loss'))

@@ -20,4 +20,8 @@ text.joinColumns = (left, right, opts) => {
   return output
 }
 
+text.percent = num => {
+  return (Math.round(num * 100)) + '%'
+}
+
 module.exports = text
