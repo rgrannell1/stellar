@@ -9,6 +9,7 @@ const network = require('../commons/network')
 const monitors = {
   packetLoss: require('../monitor/packet-loss'),
   networkIncidents: require('../monitor/network-incidents'),
+  network: require('../monitor/network'),
   latency: require('../monitor/latency')
 }
 
@@ -26,7 +27,6 @@ const pingNetworks = args => {
       }
 
       const networkName = await network.getName()
-
 
       emitter.emit('ping', {
         networkName,
@@ -47,6 +47,7 @@ const aggregateStats = (state, args) => {
   state.percentiles = monitors.latency.aggregate(state, args)
   state.packetLoss = monitors.packetLoss.aggregate(state, args)
   state.networkIncidents = monitors.networkIncidents.aggregate(state, args)
+  state.networks = monitors.network.aggregate(state, args)
 }
 
 /**
@@ -102,12 +103,13 @@ const displayCli = state => {
   let message = ''
 
   console.clear()
-
+  monitors.networkIncidents.display(state)
   console.log('-------- cuptime -----------------------------------------------------------')
   console.log('')
 
   console.log(chalk.bold('Total Packet Loss'))
   monitors.packetLoss.display(state)
+  monitors.network.display(state)
 
   console.log(chalk.bold('Degraded Service'))
   monitors.networkIncidents.display(state)

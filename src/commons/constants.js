@@ -3,6 +3,22 @@ const asciichart = require('asciichart')
 
 const constants = {
   packageJson: require('../../package'),
+  networkColours: [
+    asciichart.lightgreen,
+    asciichart.lightyellow,
+    asciichart.lightblue,
+    asciichart.lightmagenta,
+    asciichart.lightcyan,
+    asciichart.darkgray,
+    asciichart.lightred,
+    asciichart.red,
+    asciichart.green,
+    asciichart.yellow,
+    asciichart.blue,
+    asciichart.magenta,
+    asciichart.cyan,
+    asciichart.white
+  ],
   bins: {
     '1m': 60 * 1000,
     '15m': 15 * 60 * 1000,

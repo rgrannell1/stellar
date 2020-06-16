@@ -41,43 +41,6 @@ const addJitter = num => {
   return str.padEnd(17)
 }
 
-latency.display = (host, hostData) => {
-  const { percentiles } = hostData
-
-  const hostDescription = constants.hosts.find(data => data.host === host).name
-  console.log(`${hostDescription}: ${host}`)
-
-  let message = ''
-  // -- add table headings
-  {
-    let line = ''
-    for (const header of ['period', 'p1', 'p5', 'p25', 'p50', 'p75', 'p95', 'p99', 'jitter']) {
-      line += `${pad(header)}`
-    }
-
-    message += `${line}\n`
-  }
-
-  // -- add line entries
-  for (const [timePeriod, entries] of Object.entries(percentiles)) {
-    let line = pad(timePeriod)
-
-    line += addEntry(entries.p1)
-    line += addEntry(entries.p5)
-    line += addEntry(entries.p25)
-    line += addEntry(entries.p50)
-    line += addEntry(entries.p75)
-    line += addEntry(entries.p95)
-    line += addEntry(entries.p99)
-    line += addJitter(entries.jitter)
-
-    message += line + '\n'
-  }
-
-  console.log(message)
-}
-
-
 const fetchEntries = (diff, snapshots) => {
   return snapshots.filter(snapshot => {
     return snapshot.timestamp > (Date.now() - diff)
@@ -115,6 +78,42 @@ latency.aggregate = (state, args) => {
   }
 
   return percentilesByHost
+}
+
+latency.display = (host, hostData) => {
+  const { percentiles } = hostData
+
+  const hostDescription = constants.hosts.find(data => data.host === host).name
+  console.log(`${hostDescription}: ${host}`)
+
+  let message = ''
+  // -- add table headings
+  {
+    let line = ''
+    for (const header of ['period', 'p1', 'p5', 'p25', 'p50', 'p75', 'p95', 'p99', 'jitter']) {
+      line += `${pad(header)}`
+    }
+
+    message += `${line}\n`
+  }
+
+  // -- add line entries
+  for (const [timePeriod, entries] of Object.entries(percentiles)) {
+    let line = pad(timePeriod)
+
+    line += addEntry(entries.p1)
+    line += addEntry(entries.p5)
+    line += addEntry(entries.p25)
+    line += addEntry(entries.p50)
+    line += addEntry(entries.p75)
+    line += addEntry(entries.p95)
+    line += addEntry(entries.p99)
+    line += addJitter(entries.jitter)
+
+    message += line + '\n'
+  }
+
+  console.log(message)
 }
 
 module.exports = latency

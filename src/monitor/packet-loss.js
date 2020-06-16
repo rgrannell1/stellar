@@ -3,6 +3,7 @@ const chalk = require('chalk')
 
 const asciichart = require('asciichart')
 
+const text = require('../commons/text')
 const constants = require('../commons/constants')
 
 const packetLoss = {}
@@ -46,35 +47,27 @@ packetLoss.display = state => {
     series.push(data)
   }
 
-  let text = asciichart.plot(series, {
+  let graph = asciichart.plot(series, {
     height: 7,
     offset: 2,
     colors: constants.hosts.map(data => data.colour.asciichart),
     format: label => {
-      return `${(label * 100).toFixed(0)}%`
+      const formatted = `${(label * 100).toFixed(0)}%`
+      return formatted.padStart(4)
     }
   })
-  text = text.split('\n')
 
-  let output = ''
+  const floo = constants.hosts.map(data => {
+    const square = chalk[data.colour.chalk]('■')
+    return `${data.host} ${square}`
+  }).join('\n')
 
-  let ith = 0
-  for (let ith = 0; ith < text.length; ++ith) {
-    let host = hosts[ith]
-    if (host) {
-      let colour = constants.hosts.find(data => data.host === host).colour.chalk
-      let square = chalk[colour]('■')
+  const joined = text.joinColumns(floo, graph, {
+    leftPad: [27, 17]
+  })
 
-      let label = `${hosts[ith]} ${square}`
-      output += `${label.padEnd(20)}${text[ith]}\n`
-    } else {
-      output += `${''.padEnd(10)}${text[ith]}\n`
-    }
-  }
-
-  console.log(output)
+  console.log(joined)
   console.log('')
-
 }
 
 module.exports = packetLoss

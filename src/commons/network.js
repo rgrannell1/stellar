@@ -12,7 +12,7 @@ let previousNetwork
 network.getName = async () => {
   try {
     previousNetwork = await wifiName()
-    return
+    return previousNetwork
   } catch (err) {
     return previousNetwork + '*'
   }

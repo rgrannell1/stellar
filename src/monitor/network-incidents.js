@@ -63,11 +63,7 @@ serviceLevel.unuseable = stretch => {
 }
 
 networkIncidents.aggregate = async (state, args) => {
-  const incidents = []
 
-  const binSize = Math.ceil(30_000 / constants.intervals.poll)
-
-  return incidents
 }
 
 /**
