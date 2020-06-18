@@ -13,7 +13,7 @@ Usage:
   cuptime (-h | --help | --version)
 
 Options:
-  -i <int>, --interval <int>    the interval [default: ${constants.intervals.poll}]
+  -i <int>, --interval <int>    the interval at which to send test ICMP requests [default: ${constants.intervals.poll}]
 
 Authors:
   ${constants.packageJson.author}

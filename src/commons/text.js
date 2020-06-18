@@ -1,6 +1,13 @@
 
 const text = {}
 
+/**
+ * Merge two text columns together
+ *
+ * @param {string} left the left text
+ * @param {string} right the right text
+ * @param {Object} opts an object
+ */
 text.joinColumns = (left, right, opts) => {
   const leftLines = left.split('\n')
   const rightLines = right.split('\n')
@@ -20,6 +27,11 @@ text.joinColumns = (left, right, opts) => {
   return output
 }
 
+/**
+ * Pretty-print a number as a percentage
+ *
+ * @param {number} num a number
+ */
 text.percent = num => {
   return (Math.round(num * 100)) + '%'
 }

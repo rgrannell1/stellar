@@ -7,6 +7,11 @@ Please report the following error message to https://github.com/rgrannell1/cupti
 (along with the input text if possible):
 `
 
+/**
+ * Display errors appropriately, include user-instructions
+ *
+ * @param {Error} err the error to preocess.
+ */
 const handleErrors = err => {
   if (err.code) {
     console.error(err.message)

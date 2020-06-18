@@ -1,5 +1,4 @@
 
-const fs = require('fs')
 const chalk = require('chalk')
 const ping = require('ping').promise
 const EventEmitter = require('events')
@@ -44,25 +43,9 @@ const pingNetworks = args => {
 // -- hack
 
 
-const getState = () => {
-  const fs = require('fs')
-
-  try {
-    const content = fs.readFileSync('.cuptime-state.json')
-    return JSON.parse(content.toString())
-  } catch (err) {
-    return {
-      snapshots: []
-    }
-  }
+const state = {
+  snapshots: []
 }
-
-const state = getState()
-
-process.on('SIGINT', function () {
-  fs.writeFileSync('.cuptime-state.json', JSON.stringify(state))
-  process.exit(0)
-})
 
 const aggregateStats = (state, args) => {
   state.percentiles = monitors.latency.aggregate(state, args)

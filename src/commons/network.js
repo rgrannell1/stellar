@@ -8,6 +8,8 @@ let previousNetwork
 /**
  * Get the current network name.
  *
+ * @returns {string} the present network name, or the previous with an astericks
+ *   when the connection drops
  */
 network.getName = async () => {
   try {

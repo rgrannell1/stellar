@@ -74,6 +74,26 @@ const formatDate = date => {
   }
 }
 
+const isComparable = (state0, state1) => {
+  return state0 === state1 ||
+    (state0 !== 'NORMAL' && state1 !== 'NORMAL')
+}
+
+const worstStatus = (state0, state1) => {
+  if (state0 === 'UNUSEABLE' || state1 === 'UNUSEABLE') {
+    return 'UNUSEABLE'
+  }
+  if (state0 === 'NORMAL' || state1 === 'NORMAL') {
+    return 'NORMAL'
+  }
+  if (state0 === 'MILD_IMPACT' || state1 === 'MILD_IMPACT') {
+    return 'MILD_IMPACT'
+  }
+  if (state0 === 'SEVERE_IMPACT' || state1 === 'SEVERE_IMPACT') {
+    return 'SEVERE_IMPACT'
+  }
+}
+
 /**
  * Detect deviations from normal network behavior
  *
@@ -91,8 +111,14 @@ networkIncidents.display = async (state, args) => {
   }
 
   const grouped = momentaryStatuses.reduce(function (prev, curr) {
-    if (prev.length && curr.status === prev[prev.length - 1][0].status) {
-      prev[prev.length - 1].push(curr)
+    if (prev.length && isComparable(curr.status, prev[prev.length - 1][0].status)) {
+      const status0 = curr.status
+      const status1 = prev[prev.length - 1][0].status
+
+      prev[prev.length - 1].push({
+        ...curr,
+        status: worstStatus(status0, status1)
+      })
     }
     else {
       prev.push([curr])
