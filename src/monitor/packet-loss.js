@@ -62,12 +62,12 @@ packetLoss.display = state => {
     }
   })
 
-  const floo = constants.hosts.map(data => {
+  const contents = constants.hosts.map(data => {
     const square = chalk[data.colour.chalk]('■')
     return `${data.host} ${square}`
   }).join('\n')
 
-  const joined = text.joinColumns(floo, graph, {
+  const joined = text.joinColumns(contents, graph, {
     leftPad: [27, 17]
   })
 

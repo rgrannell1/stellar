@@ -3,6 +3,7 @@ const asciichart = require('asciichart')
 
 const constants = {
   packageJson: require('../../package'),
+  // -- move to config
   networkColours: [
     {
       chalk: 'red',

@@ -3,7 +3,7 @@ const wifiName = require('wifi-name')
 
 const network = {}
 
-let previousNetwork
+let previousNetwork = 'unknown'
 
 /**
  * Get the current network name.
@@ -13,10 +13,18 @@ let previousNetwork
  */
 network.getName = async () => {
   try {
-    previousNetwork = await wifiName()
-    return previousNetwork
+    const currentNetwork = await wifiName()
+
+    if (currentNetwork) {
+      previousNetwork = currentNetwork
+      return currentNetwork
+    } else {
+      return previousNetwork
+    }
   } catch (err) {
-    return previousNetwork + '*'
+    return previousNetwork === 'unknown'
+      ? previousNetwork
+      : previousNetwork + '*'
   }
 }
 

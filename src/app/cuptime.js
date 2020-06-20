@@ -1,18 +1,11 @@
 
-const chalk = require('chalk')
 const ping = require('ping').promise
 const EventEmitter = require('events')
 
 const constants = require('../commons/constants')
 const network = require('../commons/network')
-
-const monitors = {
-  packetLoss: require('../monitor/packet-loss'),
-  networkIncidents: require('../monitor/network-incidents'),
-  network: require('../monitor/network'),
-  latency: require('../monitor/latency')
-}
-
+const monitors = require('../monitor')
+const display = require('../cli/display-cli')
 
 const pingNetworks = args => {
   const emitter = new EventEmitter()
@@ -47,7 +40,7 @@ const state = {
   snapshots: []
 }
 
-const aggregateStats = (state, args) => {
+const aggregateStats = async (state, args) => {
   state.percentiles = monitors.latency.aggregate(state, args)
 
   const { packetLossPercent, packetLoss } = monitors.packetLoss.aggregate(state, args)
@@ -56,8 +49,8 @@ const aggregateStats = (state, args) => {
   state.packetLoss = packetLoss
 
 
-  state.networkIncidents = monitors.networkIncidents.aggregate(state, args)
-  state.networks = monitors.network.aggregate(state, args)
+  state.networkIncidents = await monitors.networkIncidents.aggregate(state, args)
+  state.networks = await monitors.network.aggregate(state, args)
 }
 
 /**
@@ -65,7 +58,7 @@ const aggregateStats = (state, args) => {
  *
  * @param {Object} state applciation state
  */
-const updateHostStats = (state, args) => (data) => {
+const updateHostStats = (state, args) => async (data) => {
   const snapshots = state.snapshots
 
   const snapshot = {
@@ -86,8 +79,8 @@ const updateHostStats = (state, args) => (data) => {
 
   snapshots.push(snapshot)
 
-  aggregateStats(state, args)
-  displayCli(state)
+  await aggregateStats(state, args)
+  display.cli(state)
 }
 
 /**
@@ -105,32 +98,9 @@ const cuptime = async rawArgs => {
 }
 
 /**
- * Display an interactive CLI containing network information.
  *
- * @param {Object} state the application state.
+ * @param {Object} args
  */
-const displayCli = state => {
-  let message = ''
-
-  console.clear()
-  monitors.networkIncidents.display(state)
-  const failed = state.snapshots.filter(data => !data.alive).length
-  console.log(chalk.bold('cuptime') + ` --- ${state.packetLossPercent} failed (${failed} of ${state.snapshots.length} requests)`)
-  console.log('')
-
-  console.log(chalk.bold('Total Packet Loss'))
-  monitors.packetLoss.display(state)
-  monitors.network.display(state)
-
-  console.log(chalk.bold('Degraded Service'))
-  monitors.networkIncidents.display(state)
-  console.log(chalk.bold('Latency & Jitter'))
-
-  for (const host of Object.keys(state.percentiles)) {
-    monitors.latency.display(host, state.percentiles[host])
-  }
-}
-
 cuptime.preprocess = args => {
   if (!args.hosts) {
     args.hosts = constants.hosts

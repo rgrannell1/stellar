@@ -53,7 +53,9 @@ network.display = async (state, args) => {
       }
     }
 
-    networksOverTime.push(commonNetwork.name)
+    if (commonNetwork.name) {
+      networksOverTime.push(commonNetwork.name)
+    }
   }
 
   const series = []
@@ -70,11 +72,12 @@ network.display = async (state, args) => {
     series.push([0, ...hostSeries])
   }
 
+  networksOverTime
+
   const labels = [...networkNames]
     .filter(data => !!data)
     .map((label, ith) => {
-      // -- TODO why does +1 select the correct colour?
-      const colour = constants.networkColours[ith + 1].chalk
+      const colour = constants.networkColours[ith].chalk
       return label + chalk[colour](' ■')
     }).join('\n')
 

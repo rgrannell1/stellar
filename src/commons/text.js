@@ -7,6 +7,8 @@ const text = {}
  * @param {string} left the left text
  * @param {string} right the right text
  * @param {Object} opts an object
+ *
+ * @returns {string} the merged text
  */
 text.joinColumns = (left, right, opts) => {
   const leftLines = left.split('\n')
