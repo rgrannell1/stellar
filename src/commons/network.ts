@@ -1,7 +1,5 @@
 
-const wifiName = require('wifi-name')
-
-const network = {}
+import wifiName from 'wifi-name'
 
 let previousNetwork = 'unknown'
 
@@ -11,7 +9,7 @@ let previousNetwork = 'unknown'
  * @returns {string} the present network name, or the previous with an astericks
  *   when the connection drops
  */
-network.getName = async () => {
+export const getName = async () => {
   try {
     const currentNetwork = await wifiName()
 
@@ -27,5 +25,3 @@ network.getName = async () => {
       : previousNetwork + '*'
   }
 }
-
-module.exports = network

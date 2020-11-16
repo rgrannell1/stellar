@@ -1,5 +1,5 @@
 
-# cuptime
+# stellar
 
 ### Usage
 
@@ -8,7 +8,7 @@
 On Linux distributions that support Snap packages, run:
 
 ```
-sudo snap install cuptime
+sudo snap install stellar
 ```
 
 ### Changelog

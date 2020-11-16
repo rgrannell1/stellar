@@ -1,29 +1,26 @@
 #!/usr/bin/env node
-
-const neodoc = require('neodoc')
-
-const handleErrors = require('../commons/handle-errors')
-const constants = require('../commons/constants')
-
+import * as fs from 'fs';
+import docopt from 'docopt';
+import React from 'react';
+import ink from 'ink';
+import * as tty from 'tty';
+import constants from '../commons/constants.js';
+import { Stellar } from '../components/Stellar.js';
+const { render } = ink;
 const docs = `
 Name:
-  cuptime — measure connection reliability.
+  stellar — measure connection reliability.
 Usage:
-  cuptime [-i <int> | --interval <int>]
-  cuptime (-h | --help | --version)
-
+  stellar
+  stellar (-h | --help | --version)
 Options:
   -i <int>, --interval <int>    the interval at which to send test ICMP requests [default: ${constants.intervals.poll}]
-
+  -h, --help                          Display this documentation.
+  --version                           Display the package version.
 Authors:
-  ${constants.packageJson.author}
+  Róisín Grannell
 Version:
-  v${constants.packageJson.version}
-
-Description:
-  cuptime measures connection reliability by polling external hosts using ICMP. It currently
-  displays host packet-loss, latency, and jitter.
-
+  v0.2.0
 Copyright:
   The MIT License
   Copyright (c) 2020 Róisín Grannell
@@ -40,12 +37,16 @@ Copyright:
   LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
   OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
   OTHER DEALINGS IN THE SOFTWARE.
-`
-
-const callApp = require('../cli/call-app')
-
-const args = neodoc.run(docs)
-
-process.on('unhandledRejection', handleErrors)
-
-callApp(args).catch(handleErrors)
+`;
+const main = () => {
+    docopt.docopt(docs, {});
+    const fd = fs.openSync('/dev/tty', 'r+');
+    render(React.createElement(React.StrictMode, null,
+        React.createElement(Stellar, null)), {
+        stdin: new tty.ReadStream(fd, {}),
+        stdout: new tty.WriteStream(fd),
+        patchConsole: false
+    });
+};
+main();
+//# sourceMappingURL=stellar.js.map
